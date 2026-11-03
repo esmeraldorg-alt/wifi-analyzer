@@ -1,0 +1,69 @@
+BSS 00:11:22:33:44:55(on wlan0) -- associated
+	last seen: 120.000s [boottime]
+	TSF: 1234 usec (0d, 00:00:01)
+	freq: 2437
+	beacon interval: 100 TUs
+	capability: ESS Privacy ShortSlotTime (0x0411)
+	signal: -48.00 dBm
+	last seen: 80 ms ago
+	Information elements from Probe Response frame:
+	SSID: CasaSilva
+	Supported rates: 1.0* 2.0* 5.5* 11.0*
+	DS Parameter set: channel 6
+	RSN:	 * Version: 1
+		 * Group cipher: CCMP
+		 * Pairwise ciphers: CCMP
+		 * Authentication suites: PSK
+		 * Capabilities: 16-PTK-1-GTK-1 (0x0000)
+	WPS:	 * Version: 1.0
+		 * Wi-Fi Protected Setup State: 2 (Configured)
+BSS aa:bb:cc:00:00:01(on wlan0)
+	freq: 5180
+	beacon interval: 100 TUs
+	capability: ESS Privacy ShortSlotTime (0x0411)
+	signal: -62.00 dBm
+	SSID: CasaSilva
+	RSN:	 * Version: 1
+		 * Group cipher: CCMP
+		 * Pairwise ciphers: CCMP
+		 * Authentication suites: PSK SAE
+		 * Capabilities: 16-PTK-1-GTK-1 (0x000c)
+BSS aa:bb:cc:00:00:02(on wlan0)
+	freq: 2412
+	capability: ESS Privacy ShortSlotTime (0x0411)
+	signal: -75.00 dBm
+	SSID: Vizinho
+	RSN:	 * Version: 1
+		 * Group cipher: TKIP
+		 * Pairwise ciphers: CCMP TKIP
+		 * Authentication suites: PSK
+	WPS:	 * Version: 1.0
+BSS aa:bb:cc:00:00:03(on wlan0)
+	freq: 2462
+	capability: ESS ShortSlotTime (0x0401)
+	signal: -80.00 dBm
+	SSID: Cafe-Free
+BSS aa:bb:cc:00:00:04(on wlan0)
+	freq: 2437
+	capability: ESS Privacy ShortSlotTime (0x0411)
+	signal: -70.00 dBm
+	SSID: OldNet
+BSS aa:bb:cc:00:00:05(on wlan0)
+	freq: 2437
+	capability: ESS Privacy ShortSlotTime (0x0411)
+	signal: -85.00 dBm
+	SSID: CasaSilva
+	RSN:	 * Version: 1
+		 * Group cipher: CCMP
+		 * Pairwise ciphers: CCMP
+		 * Authentication suites: SAE
+		 * Capabilities: 16-PTK-1-GTK-1 (0x000c)
+BSS aa:bb:cc:00:00:06(on wlan0)
+	freq: 5745
+	capability: ESS Privacy ShortSlotTime (0x0411)
+	signal: -58.00 dBm
+	SSID:
+	RSN:	 * Version: 1
+		 * Group cipher: CCMP
+		 * Pairwise ciphers: CCMP
+		 * Authentication suites: PSK

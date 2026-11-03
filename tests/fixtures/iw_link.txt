@@ -1,0 +1,8 @@
+Connected to 00:11:22:33:44:55 (on wlan0)
+	SSID: CasaSilva
+	freq: 2437
+	RX: 123456 bytes (1000 packets)
+	TX: 654321 bytes (900 packets)
+	signal: -48 dBm
+	rx bitrate: 72.2 MBit/s MCS 7 short GI
+	tx bitrate: 65.0 MBit/s MCS 7
