@@ -99,4 +99,26 @@ Use somente em redes que você administra ou para as quais tem autorização. An
 ## Status do repositório
 
 - Repositório Git local em `/home/user/wifi-analyzer`, branch `main`.
-- Repositório remoto: ainda não criado no GitHub.
+- Repositório remoto: ainda não criado no GitHub. Crie `wifi-analyzer` vazio e informe a URL para o push.
+
+## App Android (APK)
+
+Versão Android nativa em `android/`, com os mesmos recursos principais: conexão, redes, canais, segurança, latência, DNS e diagnóstico. A lógica de análise está em Java sem dependência do Android (`Analise.java` e `TesteRede.java`), o que permite testá-la no computador.
+
+- Pacote: `br.com.esmeraldorg.wifianalyzer`.
+- Permissões: `INTERNET`, `ACCESS_NETWORK_STATE`, `ACCESS_WIFI_STATE`, `CHANGE_WIFI_STATE` e `ACCESS_FINE_LOCATION`.
+- Localização é obrigatória: o Android só entrega as redes vizinhas e o nome da rede conectada com a localização concedida.
+- O Android limita varreduras frequentes. Quando o limite é atingido, o app mostra o último resultado disponível.
+- O diagnóstico usa a última varredura, para não demorar demais.
+- APK gerado pelo GitHub Actions (`.github/workflows/apk.yml`) a cada push que altera `android/`.
+- Link fixo do APK mais recente: https://github.com/esmeraldorg-alt/wifi-analyzer/releases/latest/download/WifiAnalyzer.apk
+- O ícone ainda é o mesmo dos outros apps do projeto e deve ser trocado.
+
+### Testes da lógica Java
+
+```bash
+javac -d /tmp/x android/app/src/main/java/br/com/esmeraldorg/wifianalyzer/{Analise,TesteRede}.java android/testes/LogicaTeste.java
+java -cp /tmp/x br.com.esmeraldorg.wifianalyzer.LogicaTeste
+```
+
+A tela (`MainActivity.java`) depende da API do Android e é validada pela compilação no GitHub Actions.
