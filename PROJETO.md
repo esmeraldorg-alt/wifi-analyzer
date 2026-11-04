@@ -103,7 +103,7 @@ Use somente em redes que você administra ou para as quais tem autorização. An
 
 ## App Android (APK)
 
-Versão Android nativa em `android/`, com os mesmos recursos principais: conexão, redes, canais, segurança, latência, DNS e diagnóstico. A lógica de análise está em Java sem dependência do Android (`Analise.java` e `TesteRede.java`), o que permite testá-la no computador.
+Versão Android nativa em `android/`, com os mesmos recursos principais: conexão, redes, canais, segurança, **aparelhos da rede**, latência, DNS e diagnóstico. Visual escuro, com cartões coloridos por gravidade. A lógica de análise está em Java sem dependência do Android (`Analise.java` e `TesteRede.java`), o que permite testá-la no computador.
 
 - Pacote: `br.com.esmeraldorg.wifianalyzer`.
 - Permissões: `INTERNET`, `ACCESS_NETWORK_STATE`, `ACCESS_WIFI_STATE`, `CHANGE_WIFI_STATE` e `ACCESS_FINE_LOCATION`.
@@ -112,7 +112,8 @@ Versão Android nativa em `android/`, com os mesmos recursos principais: conexã
 - O diagnóstico usa a última varredura, para não demorar demais.
 - APK gerado pelo GitHub Actions (`.github/workflows/apk.yml`) a cada push que altera `android/`.
 - Link fixo do APK mais recente: https://github.com/esmeraldorg-alt/wifi-analyzer/releases/latest/download/WifiAnalyzer.apk
-- O ícone ainda é o mesmo dos outros apps do projeto e deve ser trocado.
+- Ícone próprio: três arcos de sinal Wi-Fi com um ponto verde, em fundo azul-escuro (`res/drawable/ic_fg.xml`).
+- Aparelhos da rede: varredura da sub-rede `/24` do aparelho por TCP, com nome (DNS reverso), portas abertas e MAC (quando o Android deixa ler a tabela ARP).
 
 ### Testes da lógica Java
 

@@ -120,6 +120,20 @@ public final class LogicaTeste {
         verifica(textosDiag.contains("Perda de pacotes"), "diagnóstico: perda");
         verifica(textosDiag.contains("Falha ao resolver"), "diagnóstico: DNS");
 
+        // tabela ARP: entradas incompletas são ignoradas
+        String arp = "IP address HW type Flags HW address Mask Device\n"
+                + "192.168.1.1 0x1 0x2 AA:BB:CC:DD:EE:FF * wlan0\n"
+                + "192.168.1.9 0x1 0x0 00:00:00:00:00:00 * wlan0\n";
+        Map<String, String> mapaArp = TesteRede.analisarArp(arp);
+        verifica(mapaArp.size() == 1 && "aa:bb:cc:dd:ee:ff".equals(mapaArp.get("192.168.1.1")), "arp parse");
+
+        // busca de aparelhos: no loopback todos os endereços 127.0.0.x respondem (recusa conta)
+        List<TesteRede.Dispositivo> aparelhos = TesteRede.descobrirDispositivos("127.0.0", 300);
+        boolean achouLocal = false;
+        for (TesteRede.Dispositivo d : aparelhos) if (d.ip.equals("127.0.0.1")) achouLocal = true;
+        verifica(achouLocal, "descoberta encontra 127.0.0.1");
+        verifica(aparelhos.size() >= 2, "descoberta encontra vários endereços");
+
         System.out.println(total + " verificações, " + falhas + " falhas.");
         if (falhas > 0) System.exit(1);
     }
