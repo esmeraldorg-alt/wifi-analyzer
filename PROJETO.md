@@ -112,6 +112,7 @@ Versão Android nativa em `android/`, com os mesmos recursos principais: conexã
 - O diagnóstico usa a última varredura, para não demorar demais.
 - APK gerado pelo GitHub Actions (`.github/workflows/apk.yml`) a cada push que altera `android/`.
 - Link fixo do APK mais recente: https://github.com/esmeraldorg-alt/wifi-analyzer/releases/latest/download/WifiAnalyzer.apk
+- Abertura animada (`SplashActivity`): ao tocar no ícone, o logo se desenha por cerca de 6 segundos (ponto de luz, arcos se encaixando, brilho e título letra por letra) e depois abre a tela principal. Tocar na tela pula a animação.
 - Ícone próprio: três arcos de sinal Wi-Fi com um ponto verde, em fundo azul-escuro (`res/drawable/ic_fg.xml`).
 - Aparelhos da rede: varredura da sub-rede `/24` do aparelho por TCP, com nome (DNS reverso), portas abertas e MAC (quando o Android deixa ler a tabela ARP).
 
