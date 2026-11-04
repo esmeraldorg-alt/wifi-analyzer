@@ -247,6 +247,57 @@ public final class TesteRede {
         }
     }
 
+    /** Resposta de um endereço no ping da rede. */
+    public static final class Resposta {
+        public final String ip;
+        public final double ms;
+
+        Resposta(String ip, double ms) {
+            this.ip = ip;
+            this.ms = ms;
+        }
+    }
+
+    /**
+     * Ping no host. O Android usa ICMP quando permite; caso contrário, Java tenta TCP na porta 7.
+     * Retorna o tempo em ms, ou NaN se não houver resposta.
+     */
+    public static double ping(String host, int timeoutMs) {
+        try {
+            InetAddress destino = InetAddress.getByName(host);
+            long inicio = System.nanoTime();
+            if (!destino.isReachable(timeoutMs)) return Double.NaN;
+            return (System.nanoTime() - inicio) / 1_000_000.0;
+        } catch (IOException e) {
+            return Double.NaN;
+        }
+    }
+
+    /** Faz ping em todos os endereços do prefixo (ex.: "192.168.1") e devolve os que responderam. */
+    public static List<Resposta> varrerPing(String prefixo, int timeoutMs) {
+        ExecutorService pool = Executors.newFixedThreadPool(THREADS);
+        List<Future<Resposta>> futuros = new ArrayList<>();
+        for (int i = 1; i <= 254; i++) {
+            String ip = prefixo + "." + i;
+            futuros.add(pool.submit(() -> {
+                double ms = ping(ip, timeoutMs);
+                return Double.isNaN(ms) ? null : new Resposta(ip, ms);
+            }));
+        }
+        List<Resposta> achados = new ArrayList<>();
+        for (Future<Resposta> f : futuros) {
+            try {
+                Resposta r = f.get();
+                if (r != null) achados.add(r);
+            } catch (Exception ignorado) {
+                // endereço com erro não interrompe a varredura
+            }
+        }
+        pool.shutdown();
+        achados.sort((a, b) -> Integer.compare(ultimoOcteto(a.ip), ultimoOcteto(b.ip)));
+        return achados;
+    }
+
     private static int ultimoOcteto(String ip) {
         return Integer.parseInt(ip.substring(ip.lastIndexOf('.') + 1));
     }

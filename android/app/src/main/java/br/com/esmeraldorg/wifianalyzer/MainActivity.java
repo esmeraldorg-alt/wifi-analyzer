@@ -18,6 +18,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.Gravity;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -44,6 +45,7 @@ public class MainActivity extends Activity {
     private static final int LARANJA = 0xFFFF9248;
     private static final int ROXO = 0xFF9B7BFF;
     private static final int CIANO = 0xFF2EE6D6;
+    private static final int LIMA = 0xFFB8FF6B;
     private static final int ROSA = 0xFFFF6FB5;
 
     private final Handler ui = new Handler(Looper.getMainLooper());
@@ -51,6 +53,8 @@ public class MainActivity extends Activity {
     private float densidade;
     private TextView status;
     private LinearLayout resultados;
+    /** Área de respostas do ping, abaixo do campo de digitação. */
+    private LinearLayout areaPing;
 
     /** Ação esperando a permissão de localização. */
     private String acaoPendente;
@@ -83,13 +87,13 @@ public class MainActivity extends Activity {
         TextView sub = texto("Veja o que está em volta e quem está na sua rede", 14, CINZA, false);
         raiz.addView(sub, lp(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT, 0, dp(14)));
 
-        String[] nomes = {"Conexão", "Redes", "Canais", "Segurança", "Dispositivos", "Latência", "DNS", "Diagnóstico"};
-        String[] ids = {"conexao", "redes", "canais", "seguranca", "dispositivos", "latencia", "dns", "diagnostico"};
-        int[] cores = {AZUL, CIANO, VERDE, VERMELHO, ROSA, AMARELO, ROXO, LARANJA};
+        String[] nomes = {"Conexão", "Redes", "Canais", "Segurança", "Dispositivos", "Latência", "DNS", "Diagnóstico", "Ping"};
+        String[] ids = {"conexao", "redes", "canais", "seguranca", "dispositivos", "latencia", "dns", "diagnostico", "ping"};
+        int[] cores = {AZUL, CIANO, VERDE, VERMELHO, ROSA, AMARELO, ROXO, LARANJA, LIMA};
         for (int i = 0; i < nomes.length; i += 2) {
             LinearLayout linha = new LinearLayout(this);
             linha.setOrientation(LinearLayout.HORIZONTAL);
-            for (int j = i; j < i + 2; j++) {
+            for (int j = i; j < Math.min(i + 2, nomes.length); j++) {
                 TextView botao = texto(nomes[j], 16, cores[j], true);
                 botao.setGravity(Gravity.CENTER);
                 botao.setPadding(dp(8), dp(16), dp(8), dp(16));
@@ -132,7 +136,7 @@ public class MainActivity extends Activity {
             requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PEDIDO_PERMISSAO);
             return;
         }
-        boolean precisaWifi = !id.equals("latencia") && !id.equals("dns");
+        boolean precisaWifi = !id.equals("latencia") && !id.equals("dns") && !id.equals("ping");
         if (precisaWifi && !wm.isWifiEnabled()) {
             mostrarStatus("O Wi-Fi está desligado. Ligue-o e tente de novo.");
             return;
@@ -140,6 +144,9 @@ public class MainActivity extends Activity {
         switch (id) {
             case "conexao":
                 mostrarConexao();
+                break;
+            case "ping":
+                mostrarPing();
                 break;
             case "dispositivos":
                 mostrarDispositivos();
@@ -457,6 +464,104 @@ public class MainActivity extends Activity {
         }).start();
     }
 
+    // ---------- ping ----------
+
+    private void mostrarPing() {
+        limpar();
+        secao("Ping");
+        LinearLayout c = cartao(LIMA);
+
+        EditText campo = new EditText(this);
+        campo.setSingleLine(true);
+        campo.setTextColor(TEXTO);
+        campo.setHintTextColor(CINZA);
+        campo.setHint("IP ou endereço, ex.: 192.168.0.1");
+        String gateway = gatewayAtual();
+        if (gateway != null) campo.setText(gateway);
+        campo.setBackground(forma(FUNDO, dp(10), BORDA, 1));
+        campo.setPadding(dp(12), dp(10), dp(12), dp(10));
+        c.addView(campo);
+
+        LinearLayout botoes = new LinearLayout(this);
+        botoes.setOrientation(LinearLayout.HORIZONTAL);
+        botoes.setPadding(0, dp(10), 0, 0);
+        TextView pingar = botaoAcao("Pingar 4x", LIMA);
+        pingar.setOnClickListener(v -> pingarHost(campo.getText().toString().trim()));
+        TextView varrer = botaoAcao("Varrer a rede", CIANO);
+        varrer.setOnClickListener(v -> varrerRede());
+        botoes.addView(pingar, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        botoes.addView(varrer, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        c.addView(botoes);
+
+        areaPing = new LinearLayout(this);
+        areaPing.setOrientation(LinearLayout.VERTICAL);
+        resultados.addView(areaPing);
+        mostrarStatus("Digite um IP e toque em Pingar, ou varra toda a rede.");
+    }
+
+    private TextView botaoAcao(String rotulo, int cor) {
+        TextView b = texto(rotulo, 15, cor, true);
+        b.setGravity(Gravity.CENTER);
+        b.setPadding(dp(8), dp(12), dp(8), dp(12));
+        b.setBackground(forma(FUNDO, dp(10), cor, 1));
+        return b;
+    }
+
+    private void pingarHost(String host) {
+        if (host.isEmpty()) {
+            mostrarStatus("Digite um IP ou endereço para pingar.");
+            return;
+        }
+        areaPing.removeAllViews();
+        mostrarStatus("Pingando " + host + "...");
+        new Thread(() -> {
+            double[] r = new double[4];
+            for (int i = 0; i < r.length; i++) r[i] = TesteRede.ping(host, 1000);
+            TesteRede.Estatisticas s = TesteRede.estatisticas(r);
+            ui.post(() -> {
+                areaPing.removeAllViews();
+                LinearLayout c = cartaoEm(areaPing, s.perda > 0 ? AMARELO : VERDE);
+                c.addView(texto(host, 18, TEXTO, true));
+                for (int i = 0; i < r.length; i++) {
+                    boolean semResposta = Double.isNaN(r[i]);
+                    linhaKV(c, "Resposta " + (i + 1), semResposta ? "sem resposta" : fmt(r[i]),
+                            semResposta ? VERMELHO : 0);
+                }
+                linhaKV(c, "Mínimo / média / máximo",
+                        fmt(s.minimo) + " / " + fmt(s.media) + " / " + fmt(s.maximo), 0);
+                linhaKV(c, "Perda", String.format(Locale.ROOT, "%.0f%%", s.perda), s.perda > 0 ? VERMELHO : VERDE);
+                mostrarStatus(s.perda < 100 ? "Ping concluído." : "Nenhuma resposta de " + host + ".");
+            });
+        }).start();
+    }
+
+    private void varrerRede() {
+        String ip = ipLocal();
+        if (ip == null) {
+            mostrarStatus("Conecte-se ao Wi-Fi para varrer a rede.");
+            return;
+        }
+        String gateway = gatewayAtual();
+        String prefixo = ip.substring(0, ip.lastIndexOf('.'));
+        areaPing.removeAllViews();
+        mostrarStatus("Pingando " + prefixo + ".1 até .254... pode levar alguns segundos.");
+        new Thread(() -> {
+            List<TesteRede.Resposta> lista = TesteRede.varrerPing(prefixo, 800);
+            ui.post(() -> {
+                areaPing.removeAllViews();
+                LinearLayout c = cartaoEm(areaPing, CIANO);
+                c.addView(texto(lista.size() + " endereço(s) responderam", 16, TEXTO, true));
+                for (TesteRede.Resposta r : lista) {
+                    boolean eEste = r.ip.equals(ip);
+                    boolean eRoteador = r.ip.equals(gateway);
+                    String tag = eEste ? "  · este aparelho" : eRoteador ? "  · roteador" : "";
+                    linhaKV(c, r.ip + tag, fmt(r.ms), eEste ? AZUL : eRoteador ? ROXO : VERDE);
+                }
+                mostrarStatus(lista.size() + " endereço(s) responderam ao ping.");
+            });
+        }).start();
+    }
+
     // ---------- blocos visuais ----------
 
     private void limpar() {
@@ -477,6 +582,10 @@ public class MainActivity extends Activity {
 
     /** Cria um cartão com borda colorida e o adiciona à lista de resultados. */
     private LinearLayout cartao(int cor) {
+        return cartaoEm(resultados, cor);
+    }
+
+    private LinearLayout cartaoEm(LinearLayout destino, int cor) {
         LinearLayout c = new LinearLayout(this);
         c.setOrientation(LinearLayout.VERTICAL);
         c.setPadding(dp(14), dp(12), dp(14), dp(12));
@@ -484,7 +593,7 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         p.setMargins(dp(2), 0, dp(2), dp(10));
-        resultados.addView(c, p);
+        destino.addView(c, p);
         return c;
     }
 

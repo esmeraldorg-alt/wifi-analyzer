@@ -134,6 +134,10 @@ public final class LogicaTeste {
         verifica(achouLocal, "descoberta encontra 127.0.0.1");
         verifica(aparelhos.size() >= 2, "descoberta encontra vários endereços");
 
+        // ping no loopback deve responder
+        verifica(!Double.isNaN(TesteRede.ping("127.0.0.1", 1000)), "ping no 127.0.0.1");
+        verifica(Double.isNaN(TesteRede.ping("host.invalido.test", 500)), "ping em host inexistente");
+
         System.out.println(total + " verificações, " + falhas + " falhas.");
         if (falhas > 0) System.exit(1);
     }
