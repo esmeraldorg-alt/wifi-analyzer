@@ -138,6 +138,33 @@ public final class LogicaTeste {
         verifica(!Double.isNaN(TesteRede.ping("127.0.0.1", 1000)), "ping no 127.0.0.1");
         verifica(Double.isNaN(TesteRede.ping("host.invalido.test", 500)), "ping em host inexistente");
 
+        // velocidade: servidor HTTP local com download e upload
+        com.sun.net.httpserver.HttpServer servidor = com.sun.net.httpserver.HttpServer.create(
+                new java.net.InetSocketAddress("127.0.0.1", 0), 0);
+        servidor.createContext("/down", ex -> {
+            byte[] corpo = new byte[2_000_000];
+            ex.sendResponseHeaders(200, corpo.length);
+            try (java.io.OutputStream o = ex.getResponseBody()) {
+                o.write(corpo);
+            }
+        });
+        servidor.createContext("/up", ex -> {
+            byte[] buf = new byte[65536];
+            try (java.io.InputStream i = ex.getRequestBody()) {
+                while (i.read(buf) != -1) { /* consome o corpo */ }
+            }
+            ex.sendResponseHeaders(200, -1);
+            ex.close();
+        });
+        servidor.start();
+        String base = "http://127.0.0.1:" + servidor.getAddress().getPort();
+        double baixa = TesteVelocidade.download(base + "/down", 5000);
+        double envio = TesteVelocidade.upload(base + "/up", 1_000_000, 5000);
+        servidor.stop(0);
+        verifica(!Double.isNaN(baixa) && baixa > 0, "download mede velocidade positiva");
+        verifica(!Double.isNaN(envio) && envio > 0, "upload mede velocidade positiva");
+        verifica(Double.isNaN(TesteVelocidade.download("http://127.0.0.1:1/x", 500)), "download falha sem servidor");
+
         System.out.println(total + " verificações, " + falhas + " falhas.");
         if (falhas > 0) System.exit(1);
     }

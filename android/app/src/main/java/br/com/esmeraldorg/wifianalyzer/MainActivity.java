@@ -46,6 +46,7 @@ public class MainActivity extends Activity {
     private static final int ROXO = 0xFF9B7BFF;
     private static final int CIANO = 0xFF2EE6D6;
     private static final int LIMA = 0xFFB8FF6B;
+    private static final int OURO = 0xFFFFD166;
     private static final int ROSA = 0xFFFF6FB5;
 
     private final Handler ui = new Handler(Looper.getMainLooper());
@@ -55,6 +56,8 @@ public class MainActivity extends Activity {
     private LinearLayout resultados;
     /** Área de respostas do ping, abaixo do campo de digitação. */
     private LinearLayout areaPing;
+    /** Área de resultados do teste de velocidade. */
+    private LinearLayout areaVelocidade;
 
     /** Ação esperando a permissão de localização. */
     private String acaoPendente;
@@ -87,9 +90,9 @@ public class MainActivity extends Activity {
         TextView sub = texto("Veja o que está em volta e quem está na sua rede", 14, CINZA, false);
         raiz.addView(sub, lp(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT, 0, dp(14)));
 
-        String[] nomes = {"Conexão", "Redes", "Canais", "Segurança", "Dispositivos", "Latência", "DNS", "Diagnóstico", "Ping"};
-        String[] ids = {"conexao", "redes", "canais", "seguranca", "dispositivos", "latencia", "dns", "diagnostico", "ping"};
-        int[] cores = {AZUL, CIANO, VERDE, VERMELHO, ROSA, AMARELO, ROXO, LARANJA, LIMA};
+        String[] nomes = {"Conexão", "Redes", "Canais", "Segurança", "Dispositivos", "Latência", "DNS", "Diagnóstico", "Ping", "Velocidade"};
+        String[] ids = {"conexao", "redes", "canais", "seguranca", "dispositivos", "latencia", "dns", "diagnostico", "ping", "velocidade"};
+        int[] cores = {AZUL, CIANO, VERDE, VERMELHO, ROSA, AMARELO, ROXO, LARANJA, LIMA, OURO};
         for (int i = 0; i < nomes.length; i += 2) {
             LinearLayout linha = new LinearLayout(this);
             linha.setOrientation(LinearLayout.HORIZONTAL);
@@ -136,7 +139,8 @@ public class MainActivity extends Activity {
             requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PEDIDO_PERMISSAO);
             return;
         }
-        boolean precisaWifi = !id.equals("latencia") && !id.equals("dns") && !id.equals("ping");
+        boolean precisaWifi = !id.equals("latencia") && !id.equals("dns") && !id.equals("ping")
+                && !id.equals("velocidade");
         if (precisaWifi && !wm.isWifiEnabled()) {
             mostrarStatus("O Wi-Fi está desligado. Ligue-o e tente de novo.");
             return;
@@ -144,6 +148,9 @@ public class MainActivity extends Activity {
         switch (id) {
             case "conexao":
                 mostrarConexao();
+                break;
+            case "velocidade":
+                mostrarVelocidade();
                 break;
             case "ping":
                 mostrarPing();
@@ -560,6 +567,78 @@ public class MainActivity extends Activity {
                 mostrarStatus(lista.size() + " endereço(s) responderam ao ping.");
             });
         }).start();
+    }
+
+    // ---------- velocidade ----------
+
+    private void mostrarVelocidade() {
+        limpar();
+        secao("Teste de velocidade");
+        LinearLayout c = cartao(OURO);
+        c.addView(texto("Mede download, upload e latência usando o servidor speed.cloudflare.com. "
+                + "Usa cerca de 15 MB de dados.", 13, CINZA, false));
+        TextView iniciar = botaoAcao("Iniciar teste", OURO);
+        iniciar.setOnClickListener(v -> iniciarVelocidade());
+        c.addView(iniciar);
+
+        areaVelocidade = new LinearLayout(this);
+        areaVelocidade.setOrientation(LinearLayout.VERTICAL);
+        resultados.addView(areaVelocidade);
+        mostrarStatus("Toque em Iniciar teste para medir a velocidade.");
+    }
+
+    private void iniciarVelocidade() {
+        areaVelocidade.removeAllViews();
+        mostrarStatus("Medindo latência...");
+        new Thread(() -> {
+            final TesteRede.Estatisticas lat = latenciaVelocidade();
+            ui.post(() -> mostrarStatus("Medindo download..."));
+            final double down = TesteVelocidade.download(
+                    TesteVelocidade.URL_DOWNLOAD + TesteVelocidade.BYTES_DOWNLOAD + "&t=" + System.nanoTime(), 20000);
+            ui.post(() -> mostrarStatus("Medindo upload..."));
+            final double up = TesteVelocidade.upload(
+                    TesteVelocidade.URL_UPLOAD + "?t=" + System.nanoTime(), TesteVelocidade.BYTES_UPLOAD, 20000);
+            ui.post(() -> mostrarResultadoVelocidade(down, up, lat));
+        }).start();
+    }
+
+    private TesteRede.Estatisticas latenciaVelocidade() {
+        try {
+            return TesteRede.medirLatencia(TesteVelocidade.HOST, 5, 443, 200);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return TesteRede.estatisticas(new double[]{Double.NaN});
+        }
+    }
+
+    private void mostrarResultadoVelocidade(double down, double up, TesteRede.Estatisticas lat) {
+        areaVelocidade.removeAllViews();
+        LinearLayout cDown = cartaoEm(areaVelocidade, corVelocidade(down));
+        cDown.addView(texto("Download", 13, CINZA, false));
+        cDown.addView(texto(mbps(down), 30, corVelocidade(down), true));
+
+        LinearLayout cUp = cartaoEm(areaVelocidade, corVelocidade(up));
+        cUp.addView(texto("Upload", 13, CINZA, false));
+        cUp.addView(texto(mbps(up), 30, corVelocidade(up), true));
+
+        LinearLayout cLat = cartaoEm(areaVelocidade, CIANO);
+        linhaKV(cLat, "Latência média", fmt(lat.media), 0);
+        linhaKV(cLat, "Jitter", fmt(lat.jitter), 0);
+        linhaKV(cLat, "Perda", String.format(Locale.ROOT, "%.0f%%", lat.perda), 0);
+
+        boolean falhou = Double.isNaN(down) || Double.isNaN(up);
+        mostrarStatus(falhou ? "Falha em parte do teste. Verifique a conexão." : "Teste de velocidade concluído.");
+    }
+
+    private static String mbps(double v) {
+        return Double.isNaN(v) ? "falhou" : String.format(Locale.ROOT, "%.1f Mbps", v);
+    }
+
+    private static int corVelocidade(double mbps) {
+        if (Double.isNaN(mbps)) return VERMELHO;
+        if (mbps >= 50) return VERDE;
+        if (mbps >= 10) return AMARELO;
+        return VERMELHO;
     }
 
     // ---------- blocos visuais ----------

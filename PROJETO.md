@@ -115,6 +115,7 @@ Versão Android nativa em `android/`, com os mesmos recursos principais: conexã
 - Abertura animada (`SplashActivity`): ao tocar no ícone, o logo se desenha por cerca de 6 segundos (ponto de luz, arcos se encaixando, brilho e título letra por letra) e depois abre a tela principal. Tocar na tela pula a animação.
 - Ícone próprio: três arcos de sinal Wi-Fi com um ponto verde, em fundo azul-escuro (`res/drawable/ic_fg.xml`).
 - Ping: pinga um IP ou endereço digitado (4 respostas, com mínimo, média, máximo e perda) ou varre toda a sub-rede e lista quem respondeu com o tempo de cada um. No Android, o ping usa ICMP quando o sistema permite; caso contrário, o Java tenta TCP na porta 7.
+- Teste de velocidade: mede download (10 MB), upload (5 MB) e latência com o servidor público speed.cloudflare.com. O teste usa cerca de 15 MB de dados. Classificação: verde ≥ 50 Mbps, amarelo ≥ 10 Mbps, vermelho abaixo disso.
 - Aparelhos da rede: varredura da sub-rede `/24` do aparelho por TCP, com nome (DNS reverso), portas abertas e MAC (quando o Android deixa ler a tabela ARP).
 
 ### Testes da lógica Java
